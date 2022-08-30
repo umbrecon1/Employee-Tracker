@@ -14,6 +14,9 @@ No License Chosen
 
 ## Application Preview
 ![screenshot](Untitled.png)
+https://github.com/umbrecon1/Employee-Tracker.git
+
+
 ## Installation
 - npm i
 
