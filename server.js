@@ -1,102 +1,73 @@
 const inquirer = require("inquirer");
-const db = require("./db");
+const mysql = require("mysql2");
+const db = require("./config/connection");
+const viewAllDepartments = require("./scripts/viewAllDepartments");
+const viewAllEmployees = require("./scripts/viewAllEmployees");
+const viewAllRoles = require("./scripts/viewAllRoles");
+const addEmployee = require("./scripts/addEmployee");
+const addDepartment = require("./scripts/addDepartment");
+const addRole = require("./scripts/addRole");
 
-const startMenu = {
-  name: "functionality",
-  message: "Hello, welcome to employee manager, what would you like to do?",
-  type: "list",
-  choices: [
-    "Add Employee",
-    "Update Employee",
-    "Show All Employees",
-    "Delete an Employee",
-  ],
-};
+// Refactor to async / await
+async function userChoice() {
+  const { choice } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "choice",
+      choices: [
+        "View All Employees",
+        "View All Departments",
+        "View All Roles",
+        "Add an Employee",
+        "Add a Department",
+        "Add a Role",
+        "Exit",
+      ],
+      message: "What would you like to do?",
+    },
+  ]);
+  switch (choice) {
+    case "View All Employees":
+      const allEmployees = await viewAllEmployees();
+      return userChoice();
 
-const showAllEmployees = () => {
-  //make a call to the db, and show all employees
-  db.query(`SELECT e1.id as EMP_ID, CONCAT(e1.first_name, ' ', e1.last_name) as Name, title as role, 
-  salary, department.name as department, IFNULL(CONCAT(e2.first_name, ' ', e2.last_name), 'No Manager, Bawss Status') as Manager FROM employee e1 LEFT JOIN role 
-  ON e1.role_id=role.id LEFT JOIN department ON role.department_id=department.id
-  LEFT JOIN employee e2 ON e1.manager_id=e2.id `).then((results) => {
-    console.log("--------------  EMPLOYEES  --------------");
-    console.table(results);
-    console.log("--------------  EMPLOYEES  --------------");
+    case "View All Departments":
+      const allDepartments = await viewAllDepartments();
+      return userChoice();
 
-    setTimeout(start, 3000);
-  });
-};
+    case "View All Roles":
+      const allRoles = await viewAllRoles();
+      return userChoice();
 
-const addEmployee = () => {
-  //before writing query, we need inquirer to gather info on new employee
-  //we need all the current role ids, to allow user to choose a role_id that's in the role table,
-  //we need all the current emp ids, to choose a manager_id
-  db.query(`SELECT id, first_name, last_name FROM employee`).then(
-    (managers) => {
-      const managerChoices = managers.map((man) => {
-        return {
-          name: `${man.first_name} ${man.last_name}`,
-          value: man.id,
-        };
-      });
-      db.query(`SELECT id, title FROM role`).then((results) => {
-        const choices = results.map((role) => {
-          return {
-            name: role.title,
-            value: role.id,
-          };
-        });
-        //convert results to a array of choices for inquirer prompt
-        const addEmployeePrompt = [
-          {
-            name: "first_name",
-            message: "What is the employee's first name?",
-          },
-          {
-            name: "last_name",
-            message: "What is the employee's last name?",
-          },
-          {
-            name: "role_id",
-            message: "What is the employee's title?",
-            type: "list",
-            choices,
-          },
-          {
-            name: "manager_id",
-            message: "Who is this employee's manager?",
-            type: "list",
-            choices: [
-              ...managerChoices,
-              { name: "No Manager, this person is a bawss!", value: null },
-            ],
-          },
-        ];
+    case "Add an Employee":
+      const employee = await addEmployee();
+      return userChoice();
 
-        inquirer.prompt(addEmployeePrompt).then((results) => {
-          console.log("RESULTS --- ", results);
+    case "Add a Department":
+      const department = await addDepartment();
+      return userChoice();
 
-          db.query("INSERT INTO employee SET ?", results).then(() =>
-            setTimeout(start, 3000)
-          );
-        });
-      });
-    }
-  );
-  // inquirer.prompt()
-};
+    case "Add a Role":
+      const role = await addRole();
+      return userChoice();
 
-function start() {
-  inquirer.prompt(startMenu).then((response) => {
-
-    //based on user choice, we're going to maybe ask additional questions or do some db operation
-    switch (response.functionality) {
-      case "Show All Employees":
-        return showAllEmployees();
-      case "Add Employee":
-        return addEmployee();
-    }
-  });
+    default:
+      // Exit
+      process.exit(1);
+  }
 }
 
-start();
+// CLI Application Start
+function init() {
+  console.log("**************************************************************");
+  console.log("*                                                            *");
+  console.log("*                                                            *");
+  console.log("*                       EMPLOYEE MENU                        *");
+  console.log("*                                                            *");
+  console.log("*                                                            *");
+  console.log("**************************************************************");
+
+  // Call function
+  userChoice();
+}
+init();
