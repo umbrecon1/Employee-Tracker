@@ -15,11 +15,11 @@ async function addEmployee() {
 
     const [roles] = await db
       .promise()
-      .query(`SELECT department_id, title FROM role`);
+      .query(`SELECT role_id, title FROM role`);
     const choices = roles.map((role) => {
       return {
         name: role.title,
-        value: role.department_id,
+        value: role.role_id,
       };
     });
     const { first_name, last_name, role_id, manager_id } =
